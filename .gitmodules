@@ -1,0 +1,8 @@
+[submodule "apps/web"]
+	path = apps/web
+	url = git@github.com:Henrique1204/My-Money-App-Frontend.git
+	branch = turborepo-setup
+[submodule "apps/api"]
+	path = apps/api
+	url = git@github.com:Henrique1204/My-Money-App-Backend.git
+	branch = turborepo-setup
