@@ -1,239 +1,246 @@
-# Arquitetura - Backend (API)
+# Architecture - Backend (API)
 
-## Tecnologias Utilizadas
+## Technologies Used
 
-| Categoria | Tecnologia | Versão |
-|-----------|------------|--------|
+| Category | Technology | Version |
+|----------|------------|---------|
 | Runtime | Node.js | - |
-| Framework | Express | 4.14.0 |
-| Banco de Dados | MongoDB | - |
-| ODM | Mongoose | 4.13.19 |
-| REST Helper | node-restful | 0.2.5 |
-| Autenticação | JWT (jsonwebtoken) | 7.3.0 |
-| Criptografia | bcrypt | 5.0.0 |
-| Process Manager | PM2 | 2.1.5 |
-| Dev Server | Nodemon | 1.11.0 |
-| Utilitários | Lodash | 4.17.4 |
+| Language | TypeScript | 5.6.2 |
+| Framework | Express | 4.21.0 |
+| Database | MongoDB | - |
+| ODM | Mongoose | 8.6.0 |
+| Authentication | JWT (jsonwebtoken) | 9.0.2 |
+| Encryption | bcrypt | 5.1.1 |
+| Dev Server | tsx | 4.19.0 |
+| Utilities | Lodash | 4.17.21 |
 
-## Estrutura de Pastas
+## Folder Structure
 
 ```
 src/
-├── loader.js                # Ponto de entrada (carrega DB + server)
-├── .env                     # Variáveis de ambiente (authSecret, DB URL)
-├── config/                  # Configurações do servidor
-│   ├── server.js            # Express + middlewares
-│   ├── database.js          # Conexão MongoDB
-│   ├── routes.js            # Definição de rotas
-│   ├── cors.js              # Configuração CORS
-│   └── auth.js              # Middleware de autenticação JWT
-└── api/                     # Módulos da API
-    ├── commum/
-    │   └── errorHandle.js   # Tratamento de erros
+├── loader.ts                # Entry point (loads DB + server)
+├── config/                  # Server configuration
+│   ├── server.ts            # Express + middlewares
+│   ├── database.ts          # MongoDB connection
+│   ├── routes.ts            # Route definitions
+│   ├── cors.ts              # CORS configuration
+│   └── auth.ts              # JWT authentication middleware
+└── api/                     # API modules
     ├── billingCycle/
-    │   ├── billingCycle.js       # Model (Schema Mongoose)
-    │   └── billingCycleService.js # Service (rotas + lógica)
+    │   ├── billingCycle.ts       # Model + TypeScript interfaces
+    │   └── billingCycleService.ts # Service (routes + logic)
     └── user/
-        ├── user.js          # Model (Schema Mongoose)
-        └── authService.js   # Service (login, signup, validarToken)
+        ├── user.ts          # Model + TypeScript interfaces
+        └── authService.ts   # Service (login, signup, validateToken)
 ```
 
 ---
 
-## Onde ficam as regras de negócio?
+## Where are business rules located?
 
-| Local | Tipo de Regra |
-|-------|---------------|
-| `api/*/Service.js` | Lógica de negócio, validações, transformações |
-| `api/*/*.js` (Models) | Validações de schema, constraints de dados |
-| `config/auth.js` | Regras de autenticação e autorização |
+| Location | Rule Type |
+|----------|-----------|
+| `api/*Service.ts` | Business logic, validations, transformations |
+| `api/*/*.ts` (Models) | Schema validations, data constraints, interfaces |
+| `config/auth.ts` | Authentication and authorization rules |
 
-**Principais arquivos:**
+**Main files:**
 
-### `api/user/authService.js`
-- Validação de email (regex)
-- Validação de senha (mínimo 8 chars, maiúscula, número)
-- Hash de senha com bcrypt
-- Geração e validação de JWT
-- Verificação de usuário duplicado
+### `api/user/authService.ts`
+- Email validation (regex)
+- Password validation (min 8 chars, uppercase, number)
+- Password hashing with bcrypt
+- JWT generation and validation
+- Duplicate user verification
 
-### `api/billingCycle/billingCycleService.js`
-- CRUD de ciclos de pagamento
-- Agregação para cálculo de summary (créditos/débitos)
-- Paginação de resultados
+### `api/billingCycle/billingCycleService.ts`
+- Billing cycle CRUD
+- Aggregation for summary calculation (credits/debts)
+- Result pagination
 
-### `api/billingCycle/billingCycle.js` (Model)
-- Validação de campos obrigatórios
-- Constraints de mês (1-12) e ano (1970-2100)
-- Status de débito: PAGO, PENDENTE, AGENDADO
+### `api/billingCycle/billingCycle.ts` (Model)
+- TypeScript interfaces: `ICredit`, `IDebt`, `IBillingCycle`, `IBillingCycleDocument`
+- Required field validation
+- Month (1-12) and year (1970-2100) constraints
+- Debt status: PAGO, PENDENTE, AGENDADO
 
 ---
 
-## O que não pode depender de quê?
+## What cannot depend on what?
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    CONFIG (server, routes)              │
-│         (orquestra, depende de services e models)       │
+│         (orchestrates, depends on services and models)  │
 └────────────────────────┬────────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────────┐
 │                     SERVICES                            │
-│   (lógica de negócio, depende de models e .env)         │
+│   (business logic, depends on models and .env)          │
 └────────────────────────┬────────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────────┐
 │                      MODELS                             │
-│       (schemas, NÃO depende de services/config)         │
+│       (schemas, does NOT depend on services/config)     │
 └─────────────────────────────────────────────────────────┘
 ```
 
-**Regras de dependência:**
+**Dependency rules:**
 
-| Camada | Pode depender de | NÃO pode depender de |
-|--------|------------------|----------------------|
+| Layer | Can depend on | Cannot depend on |
+|-------|---------------|------------------|
 | `config/*` | Services, Models, .env | - |
-| `api/*Service.js` | Models, .env, commum | Config |
-| `api/*/*.js` (Models) | Mongoose/restful | Services, Config |
-| `commum/*` | Nada (utilitários puros) | Models, Services, Config |
+| `api/*Service.ts` | Models, .env | Config |
+| `api/*/*.ts` (Models) | Mongoose | Services, Config |
 
 ---
 
-## O que vai mudar com mais frequência?
+## What changes most frequently?
 
-| Frequência | Local | Motivo |
-|------------|-------|--------|
-| **Alta** | `api/billingCycle/*` | Novas features, campos, validações |
-| **Média** | `api/user/authService.js` | Melhorias de segurança, novos fluxos |
-| **Média** | `config/routes.js` | Novos endpoints |
-| **Baixa** | `api/*/*.js` (Models) | Schema é estável após definido |
-| **Baixa** | `config/server.js` | Infraestrutura base |
-| **Baixa** | `config/auth.js` | Middleware de auth é estável |
-| **Rara** | `config/database.js`, `config/cors.js` | Configuração inicial |
+| Frequency | Location | Reason |
+|-----------|----------|--------|
+| **High** | `api/billingCycle/*` | New features, fields, validations |
+| **Medium** | `api/user/authService.ts` | Security improvements, new flows |
+| **Medium** | `config/routes.ts` | New endpoints |
+| **Low** | `api/*/*.ts` (Models) | Schema is stable after definition |
+| **Low** | `config/server.ts` | Base infrastructure |
+| **Low** | `config/auth.ts` | Auth middleware is stable |
+| **Rare** | `config/database.ts`, `config/cors.ts` | Initial configuration |
 
 ---
 
-## O que preciso proteger?
+## What needs protection?
 
-### 1. Dados Sensíveis
+### 1. Sensitive Data
 
-| Item | Local | Proteção Necessária |
-|------|-------|---------------------|
-| `authSecret` | `.env` | NUNCA versionar, usar variáveis de ambiente |
-| DB Connection String | `.env` | NUNCA versionar |
-| Senhas de usuário | `user.js` model | Hash com bcrypt antes de salvar |
-| Token JWT | Headers/Body | Expiração de 1 dia, validar em rotas protegidas |
+| Item | Location | Required Protection |
+|------|----------|---------------------|
+| `AUTH_SECRET` | `.env` | NEVER commit, use environment variables |
+| `MONGODB_URI` | `.env` | NEVER commit |
+| User passwords | `user.ts` model | Hash with bcrypt before saving |
+| JWT Token | Headers/Body | 1 day expiration, validate on protected routes |
 
-### 2. Models (Domínio)
+### 2. Models (Domain)
 
-| Model | Campos Críticos | Validações |
-|-------|-----------------|------------|
-| `User` | password | Hash obrigatório, min 6 chars |
-| `User` | email | Único, formato válido |
-| `BillingCycle` | credits, debts | Valores >= 0 |
-| `BillingCycle` | month, year | Ranges válidos |
+| Model | Critical Fields | Validations |
+|-------|-----------------|-------------|
+| `User` | password | Hash required, min 6 chars |
+| `User` | email | Unique, valid format |
+| `BillingCycle` | credits, debts | Values >= 0 |
+| `BillingCycle` | month, year | Valid ranges |
 
-**Schema BillingCycle:**
-```javascript
-{
-  name: String (required),
-  month: Number (1-12, required),
-  year: Number (1970-2100, required),
-  credits: [{ name: String, value: Number }],
-  debts: [{ name: String, value: Number, status: enum }]
+**BillingCycle Interface:**
+```typescript
+interface IBillingCycle {
+  name: string;
+  month: number;      // 1-12
+  year: number;       // 1970-2100
+  credits: ICredit[]; // { name: string, value: number }
+  debts: IDebt[];     // { name: string, value: number, status?: enum }
 }
 ```
 
-**Schema User:**
-```javascript
-{
-  name: String (required),
-  email: String (required, unique),
-  password: String (required, hashed)
+**User Interface:**
+```typescript
+interface IUser {
+  name: string;
+  email: string;
+  password: string;   // hashed
 }
 ```
 
-### 3. Contratos (Rotas)
+### 3. Contracts (Routes)
 
-**Rotas Protegidas** (`/api/*` - requerem JWT):
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/api/billingCycles` | Listar ciclos |
-| GET | `/api/billingCycles/summary` | Resumo consolidado |
-| GET | `/api/billingCycles/count` | Contagem total |
-| POST | `/api/billingCycles` | Criar ciclo |
-| PUT | `/api/billingCycles/:id` | Atualizar ciclo |
-| DELETE | `/api/billingCycles/:id` | Remover ciclo |
+**Protected Routes** (`/api/*` - require JWT):
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/billingCycles` | List cycles |
+| GET | `/api/billingCycles/summary` | Consolidated summary |
+| GET | `/api/billingCycles/count` | Total count |
+| GET | `/api/billingCycles/:id` | Get cycle by ID |
+| POST | `/api/billingCycles` | Create cycle |
+| PUT | `/api/billingCycles/:id` | Update cycle |
+| DELETE | `/api/billingCycles/:id` | Delete cycle |
 
-**Rotas Públicas** (`/oapi/*` - sem autenticação):
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| POST | `/oapi/login` | Autenticar usuário |
-| POST | `/oapi/signup` | Cadastrar usuário |
-| POST | `/oapi/validarToken` | Validar JWT |
+**Public Routes** (`/oapi/*` - no authentication):
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/oapi/login` | Authenticate user |
+| POST | `/oapi/signup` | Register user |
+| POST | `/oapi/validarToken` | Validate JWT |
 
-### 4. Middleware de Autenticação
+### 4. Authentication Middleware
 
-O arquivo `config/auth.js` protege todas as rotas `/api/*`:
-- Verifica presença do token (header, body ou query)
-- Valida assinatura JWT com `authSecret`
-- Retorna 403 se token inválido ou ausente
+The `config/auth.ts` file protects all `/api/*` routes:
+- Checks for token presence (header, body, or query)
+- Validates JWT signature with `AUTH_SECRET`
+- Returns 403 if token is invalid or missing
 
 ---
 
-## Fluxo de Autenticação
+## Authentication Flow
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                         SIGNUP                               │
 ├──────────────────────────────────────────────────────────────┤
-│  1. Validar email (regex)                                    │
-│  2. Validar senha (8+ chars, maiúscula, número)              │
-│  3. Verificar se email já existe                             │
-│  4. Hash da senha com bcrypt                                 │
-│  5. Salvar no MongoDB                                        │
-│  6. Fazer login automático (retorna JWT)                     │
+│  1. Validate email (regex)                                   │
+│  2. Validate password (8+ chars, uppercase, number)          │
+│  3. Check if email already exists                            │
+│  4. Hash password with bcrypt                                │
+│  5. Save to MongoDB                                          │
+│  6. Auto login (returns JWT)                                 │
 └──────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────┐
 │                          LOGIN                               │
 ├──────────────────────────────────────────────────────────────┤
-│  1. Buscar usuário por email                                 │
-│  2. Comparar senha com hash (bcrypt)                         │
-│  3. Gerar JWT com dados do usuário (expira em 1 dia)         │
-│  4. Retornar { name, email, token }                          │
+│  1. Find user by email                                       │
+│  2. Compare password with hash (bcrypt)                      │
+│  3. Generate JWT with user data (expires in 1 day)           │
+│  4. Return { name, email, token }                            │
 └──────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────┐
-│                    ROTAS PROTEGIDAS                          │
+│                    PROTECTED ROUTES                          │
 ├──────────────────────────────────────────────────────────────┤
-│  1. Middleware auth.js intercepta request                    │
-│  2. Extrai token (Authorization header)                      │
-│  3. jwt.verify() com authSecret                              │
-│  4. Se válido: next() → acessa recurso                       │
-│  5. Se inválido: 403 Forbidden                               │
+│  1. auth.ts middleware intercepts request                    │
+│  2. Extract token (Authorization header)                     │
+│  3. jwt.verify() with AUTH_SECRET                            │
+│  4. If valid: next() → access resource                       │
+│  5. If invalid: 403 Forbidden                                │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Padrões Utilizados
+## Patterns Used
 
-- **Model-Service**: Separação entre schema (Model) e lógica (Service)
-- **node-restful**: Geração automática de CRUD REST
-- **Middleware Pattern**: Autenticação via middleware Express
-- **Error Handler**: Tratamento centralizado de erros de validação
-- **Aggregation Pipeline**: MongoDB aggregation para cálculos de summary
+- **Model-Service**: Separation between schema (Model) and logic (Service)
+- **TypeScript Interfaces**: Strong typing for models and requests
+- **Async/Await**: Asynchronous operations with Promises
+- **Middleware Pattern**: Authentication via Express middleware
+- **Aggregation Pipeline**: MongoDB aggregation for summary calculations
 
 ---
 
-## Variáveis de Ambiente (.env)
+## Environment Variables (.env)
 
-```javascript
-module.exports = {
-    authSecret: 'seu_secret_aqui',  // Chave para assinar JWT
-    db: 'mongodb://localhost/...'   // Connection string MongoDB
-}
+```bash
+PORT=3003
+MONGODB_URI=mongodb://localhost/mymoney
+AUTH_SECRET=your_secret_here
 ```
 
-> **IMPORTANTE**: O arquivo `.env` contém dados sensíveis e NÃO deve ser versionado.
+> **IMPORTANT**: The `.env` file contains sensitive data and should NOT be committed.
+
+---
+
+## Available Scripts
+
+| Script | Command | Description |
+|--------|---------|-------------|
+| Dev | `npm run dev` | Start server with hot reload (tsx watch) |
+| Build | `npm run build` | Compile TypeScript to JavaScript |
+| Start | `npm run start` | Run compiled code (production) |
+| Production | `npm run production` | Start with PM2 |

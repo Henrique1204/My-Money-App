@@ -1,150 +1,150 @@
-# Arquitetura - Frontend (Web)
+# Architecture - Frontend (Web)
 
-## Tecnologias Utilizadas
+## Technologies Used
 
-| Categoria | Tecnologia | Versão |
-|-----------|------------|--------|
+| Category | Technology | Version |
+|----------|------------|---------|
 | Framework | React | 17.0.1 |
 | Bundler | Create React App | 4.0.1 |
-| Estado Global | Redux Toolkit | 1.5.0 |
-| Roteamento | React Router DOM | 6.0.0-beta |
-| Estilos | CSS Modules | - |
-| Ícones | Font Awesome | 4.7.0 |
-| Testes | Jest + React Testing Library | - |
+| Global State | Redux Toolkit | 1.5.0 |
+| Routing | React Router DOM | 6.0.0-beta |
+| Styles | CSS Modules | - |
+| Icons | Font Awesome | 4.7.0 |
+| Tests | Jest + React Testing Library | - |
 
-## Estrutura de Pastas
+## Folder Structure
 
 ```
 src/
-├── main/                    # Ponto de entrada e configuração principal
-│   ├── App.js               # Componente raiz
-│   └── Rotas.js             # Definição de rotas
-├── store/                   # Gerenciamento de estado (Redux)
-│   ├── configureStore.js    # Configuração da store
-│   ├── auth.js              # Slice de autenticação
-│   ├── billingCyclesList.js # Slice de ciclos de pagamento
-│   ├── form.js              # Slice de formulários
-│   ├── summary.js           # Slice de resumo/dashboard
-│   ├── tabs.js              # Slice de navegação por tabs
-│   └── ui.js                # Slice de UI (feedbacks, loading)
-├── Componente/              # Componentes React
-│   ├── Auth/                # Tela de login/cadastro
-│   ├── BillingCycles/       # CRUD de ciclos de pagamento
-│   ├── Dashboard/           # Dashboard com resumo financeiro
-│   ├── Header/              # Cabeçalho
-│   ├── SideBar/             # Menu lateral
-│   ├── Footer/              # Rodapé
-│   └── Util/                # Componentes reutilizáveis
+├── main/                    # Entry point and main configuration
+│   ├── App.js               # Root component
+│   └── Rotas.js             # Route definitions
+├── store/                   # State management (Redux)
+│   ├── configureStore.js    # Store configuration
+│   ├── auth.js              # Authentication slice
+│   ├── billingCyclesList.js # Billing cycles slice
+│   ├── form.js              # Forms slice
+│   ├── summary.js           # Summary/dashboard slice
+│   ├── tabs.js              # Tab navigation slice
+│   └── ui.js                # UI slice (feedbacks, loading)
+├── Componente/              # React components
+│   ├── Auth/                # Login/signup screen
+│   ├── BillingCycles/       # Billing cycles CRUD
+│   ├── Dashboard/           # Dashboard with financial summary
+│   ├── Header/              # Header
+│   ├── SideBar/             # Side menu
+│   ├── Footer/              # Footer
+│   └── Util/                # Reusable components
 ├── Hooks/                   # Custom hooks
-│   ├── useFetch.js          # Hook para requisições HTTP
-│   ├── useForm.js           # Hook para formulários
-│   └── useMedia.js          # Hook para media queries
-└── api.js                   # Configuração de endpoints da API
+│   ├── useFetch.js          # HTTP requests hook
+│   ├── useForm.js           # Forms hook
+│   └── useMedia.js          # Media queries hook
+└── api.js                   # API endpoint configuration
 ```
 
 ---
 
-## Onde ficam as regras de negócio?
+## Where are business rules located?
 
-As regras de negócio estão distribuídas em:
+Business rules are distributed across:
 
-| Local | Tipo de Regra |
-|-------|---------------|
-| `store/*.js` (Redux slices) | Lógica de estado, validações de fluxo, transformações de dados |
-| `Hooks/useForm.js` | Validações de formulário |
-| `api.js` | Contratos de comunicação com backend |
-| `Componente/*/` | Lógica de apresentação e interação |
+| Location | Rule Type |
+|----------|-----------|
+| `store/*.js` (Redux slices) | State logic, flow validations, data transformations |
+| `Hooks/useForm.js` | Form validations |
+| `api.js` | Backend communication contracts |
+| `Componente/*/` | Presentation and interaction logic |
 
-**Principais arquivos:**
-- `store/auth.js` - Lógica de autenticação, validação de token, login/logout
-- `store/billingCyclesList.js` - CRUD de ciclos de pagamento
-- `store/summary.js` - Cálculo e exibição do resumo financeiro
+**Main files:**
+- `store/auth.js` - Authentication logic, token validation, login/logout
+- `store/billingCyclesList.js` - Billing cycles CRUD
+- `store/summary.js` - Financial summary calculation and display
 
 ---
 
-## O que não pode depender de quê?
+## What cannot depend on what?
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                      COMPONENTES                        │
-│  (podem depender de store, hooks, api, outros comp.)    │
+│                      COMPONENTS                         │
+│  (can depend on store, hooks, api, other components)    │
 └────────────────────────┬────────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────────┐
 │                    STORE (Redux)                        │
-│     (pode depender de api.js, NÃO de componentes)       │
+│     (can depend on api.js, NOT on components)           │
 └────────────────────────┬────────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────────┐
 │                      API.JS                             │
-│     (apenas configurações, NÃO depende de nada)         │
+│     (configuration only, depends on NOTHING)            │
 └─────────────────────────────────────────────────────────┘
 ```
 
-**Regras de dependência:**
+**Dependency rules:**
 
-| Camada | Pode depender de | NÃO pode depender de |
-|--------|------------------|----------------------|
-| `Componente/*` | Store, Hooks, api.js, outros componentes | - |
-| `store/*` | api.js | Componentes |
-| `Hooks/*` | api.js | Store, Componentes |
-| `api.js` | Nada (camada base) | Store, Componentes, Hooks |
-
----
-
-## O que vai mudar com mais frequência?
-
-| Frequência | Local | Motivo |
-|------------|-------|--------|
-| **Alta** | `Componente/BillingCycles/*` | Features de CRUD, UI/UX |
-| **Alta** | `Componente/Dashboard/*` | Novas visualizações, cards |
-| **Média** | `store/*.js` | Novas features, ajustes de estado |
-| **Média** | `Componente/Util/*` | Componentes reutilizáveis |
-| **Baixa** | `api.js` | Novos endpoints (muda junto com backend) |
-| **Baixa** | `main/App.js`, `main/Rotas.js` | Estrutura base estável |
-| **Baixa** | `Hooks/*` | Hooks genéricos e estáveis |
+| Layer | Can depend on | Cannot depend on |
+|-------|---------------|------------------|
+| `Componente/*` | Store, Hooks, api.js, other components | - |
+| `store/*` | api.js | Components |
+| `Hooks/*` | api.js | Store, Components |
+| `api.js` | Nothing (base layer) | Store, Components, Hooks |
 
 ---
 
-## O que preciso proteger?
+## What changes most frequently?
 
-### 1. Dados Sensíveis
-| Item | Local | Proteção Necessária |
-|------|-------|---------------------|
-| Token JWT | `localStorage` via `store/auth.js` | Não expor em logs, limpar no logout |
-| Dados do usuário | `store/auth.js` (state.user) | Não persistir senha |
-| Credenciais de login | Formulário de Auth | Não logar em console |
+| Frequency | Location | Reason |
+|-----------|----------|--------|
+| **High** | `Componente/BillingCycles/*` | CRUD features, UI/UX |
+| **High** | `Componente/Dashboard/*` | New visualizations, cards |
+| **Medium** | `store/*.js` | New features, state adjustments |
+| **Medium** | `Componente/Util/*` | Reusable components |
+| **Low** | `api.js` | New endpoints (changes with backend) |
+| **Low** | `main/App.js`, `main/Rotas.js` | Stable base structure |
+| **Low** | `Hooks/*` | Generic and stable hooks |
 
-### 2. Contratos (API)
-| Arquivo | Descrição | Cuidados |
-|---------|-----------|----------|
-| `api.js` | Definição de todos os endpoints | Manter sincronizado com backend |
+---
 
-**Endpoints protegidos (requerem token):**
-- `GET /api/billingCycles` - Listar ciclos
-- `GET /api/billingCycles/summary` - Resumo financeiro
-- `POST /api/billingCycles` - Criar ciclo
-- `PUT /api/billingCycles/:id` - Atualizar ciclo
-- `DELETE /api/billingCycles/:id` - Remover ciclo
+## What needs protection?
 
-**Endpoints públicos:**
+### 1. Sensitive Data
+| Item | Location | Required Protection |
+|------|----------|---------------------|
+| JWT Token | `localStorage` via `store/auth.js` | Don't expose in logs, clear on logout |
+| User data | `store/auth.js` (state.user) | Don't persist password |
+| Login credentials | Auth form | Don't log to console |
+
+### 2. Contracts (API)
+| File | Description | Caution |
+|------|-------------|---------|
+| `api.js` | All endpoint definitions | Keep synchronized with backend |
+
+**Protected endpoints (require token):**
+- `GET /api/billingCycles` - List cycles
+- `GET /api/billingCycles/summary` - Financial summary
+- `POST /api/billingCycles` - Create cycle
+- `PUT /api/billingCycles/:id` - Update cycle
+- `DELETE /api/billingCycles/:id` - Delete cycle
+
+**Public endpoints:**
 - `POST /oapi/login` - Login
-- `POST /oapi/signup` - Cadastro
-- `POST /oapi/validarToken` - Validar token
+- `POST /oapi/signup` - Signup
+- `POST /oapi/validarToken` - Validate token
 
-### 3. Estado Global (Redux)
-| Slice | Dados Críticos |
-|-------|----------------|
+### 3. Global State (Redux)
+| Slice | Critical Data |
+|-------|---------------|
 | `auth` | user, token, validToken |
-| `billingCyclesList` | lista de ciclos (dados financeiros) |
-| `summary` | credit, debt (valores consolidados) |
+| `billingCyclesList` | cycles list (financial data) |
+| `summary` | credit, debt (consolidated values) |
 
-### 4. Rotas Protegidas
-O componente `App.js` protege todas as rotas verificando `user && validToken` antes de renderizar o conteúdo autenticado.
+### 4. Protected Routes
+The `App.js` component protects all routes by verifying `user && validToken` before rendering authenticated content.
 
 ---
 
-## Fluxo de Autenticação
+## Authentication Flow
 
 ```
 ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
@@ -160,9 +160,9 @@ O componente `App.js` protege todas as rotas verificando `user && validToken` an
 
 ---
 
-## Padrões Utilizados
+## Patterns Used
 
-- **Container/Presentational**: Componentes separados por responsabilidade
-- **CSS Modules**: Estilos escopados por componente
-- **Redux Toolkit Slices**: Estado modular com actions e reducers
-- **Custom Hooks**: Lógica reutilizável extraída em hooks
+- **Container/Presentational**: Components separated by responsibility
+- **CSS Modules**: Scoped styles per component
+- **Redux Toolkit Slices**: Modular state with actions and reducers
+- **Custom Hooks**: Reusable logic extracted into hooks
